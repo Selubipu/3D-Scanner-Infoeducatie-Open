@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>3D Scanner</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1> 3D Scanner Interface</h1>
+
+    <button id="start-btn">▶ Start Scan</button>
+    <p id="status" class="note">Click “Start Scan” to begin. The STL will download automatically when ready.</p>
+
+    <!-- Hidden download link -->
+    <a id="download-link" href="/download_stl" style="display: none;"></a>
+  </div>
+
+  <script>
+    const startBtn = document.getElementById('start-btn');
+    const statusText = document.getElementById('status');
+    const downloadLink = document.getElementById('download-link');
+
+    startBtn.addEventListener('click', async () => {
+      statusText.textContent = ' Scanning... Please wait.';
+
+      try {
+        await fetch('/start_scan', { method: 'POST' });
+
+        // Poll every 2 seconds to check scan status
+        const interval = setInterval(async () => {
+          const res = await fetch('/scan_status');
+          const data = await res.json();
+
+          if (data.ready) {
+            clearInterval(interval);
+            statusText.textContent = ' Scan complete! Downloading STL...';
+            downloadLink.click();
+          }
+        }, 2000);
+      } catch (err) {
+        console.error(err);
+        statusText.textContent = ' Error starting scan.';
+      }
+    });
+  </script>
+</body>
+</html>
